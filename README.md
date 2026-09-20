@@ -39,3 +39,4 @@ calc_akaike_weights_centralT1: Fit parameters and model weights.
 count_num_voxel: Number of voxels given by uneroded masks.  
 extract_roi_T1: ROI T1 values.  
 extract_summed_signal/newnew: ASL signal.
+Note: STCM_LV represents the STCM+outflow model, CP_LV represents the blood-CP-LV model
