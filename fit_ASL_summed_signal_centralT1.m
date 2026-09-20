@@ -12,6 +12,7 @@ read_sheet = 'mean_times_vol_normalised';
 
 lv_f_bound = [0 150];
 cp_f_bound = [0 50];
+ilv_f_bound = cp_f_bound;
 
 gm_f_bound = [0 120/6000];
 wm_f_bound = [0 120/6000];
@@ -86,6 +87,13 @@ choroid_plexus = struct('name', 'choroid plexus', 'label', 'CP', ...
     'erode_size1_corrected_mask'
     }}, ...
     'model', {{SBCM, STCM, TCM}}, 'f_bound', cp_f_bound, 'tA_bound', tA_bound, 'kb_bound', kb_bound);
+inf_lateral_ventricle = struct('name', 'inferior lateral ventricles', 'label', 'ILV', ...
+    'erode_size', {{'_mask', ...
+    'erode_size1_corrected_mask', 
+    }}, ...
+    'model', {{STCM, STCM_csf, CPLV}}, ...
+    'f_bound', ilv_f_bound, 'tA_bound', tA_bound, ...
+'outflow_csf_bound', outflow_csf_bound);
 
 %% Philips scans
 % PLD = [890	1300	1700	2100	2500] ./ 1000;
@@ -121,8 +129,9 @@ choroid_plexus = struct('name', 'choroid plexus', 'label', 'CP', ...
 
 tissue_type = {...gm, ...
   ...choroid_plexus, ...
-  lateral_ventricle,...
+  ...lateral_ventricle,...
    ...wm
+   inf_lateral_ventricle
     };
 
 subplot_num_column = 4;
@@ -336,17 +345,10 @@ for tis=1:numel(tissue_type)
                             data{i,:}, data_err, ...
                             start_point, lower_bound, upper_bound, this_model.fit_option);
                         
-                    elseif isfield(model_specific_args, 'get_cp_input')
-                        [estimates, rmse, chisq] = this_model_func(PLD, LD, alpha, lambda, SIpd,...
-                             T1b, model_specific_args.T1e_cp, model_specific_args.f_cp, ...
-                             model_specific_args.ttr_cp, ...
-                             T1e, model_specific_args.outflow_input, ...
-                             data{i,:}, data_err, start_point, lower_bound, ...
-                             upper_bound, this_model.fit_option);
                     else
-                        disp('ERROR: Neither SCM_signal nor TCM_signal nor sum_bloodLV_CPLV can be called.')
-                    end
-            
+                        disp(['ERROR: Neither SCM_signal nor TCM_signal ...' ...
+                        'nor CP_LV_model nor sum_bloodLV_CPLV can be called.'])
+                    end            
                     % multi_start_solutions(itr, :) = [rmse, chisq, estimates'];
                     multi_start_solutions(itr, :) = [rmse, estimates'];
                     
@@ -355,7 +357,7 @@ for tis=1:numel(tissue_type)
                 %% PICKED THE CORRECT SOLUTION!
                 % find solution with minimum chisq / RMSE
                 [~, I] = min(multi_start_solutions(:, 1));
-                solutions = multi_start_solutions(I, :);
+                solutions = multi_start_solutions(I, :)
 
                 results.model(mi).rmse(i) = solutions(1);
                 % results.model(mi).chisq(T1bi, T1ei, i) = solutions(2);
@@ -433,14 +435,9 @@ for tis=1:numel(tissue_type)
                     legend_text = sprintf('f=%.2e, t_A=%.2f, k_b=%.2f', ...
                         f_solution, tA_solution, solutions(end));
                     
-                elseif isfield(model_specific_args, 'get_cp_input')
-                    signal = CSF_model(PLD, LD, SIpd, alpha, lambda, ...
-                        T1b, model_specific_args.ttr_cp, ...
-                        model_specific_args.f_cp, model_specific_args.T1e_cp, ...
-                        model_specific_args.outflow_input, f_solution, tA_solution, T1e);
-                    legend_text = sprintf('k=%.2f, t_{csf}=%.2f', f_solution, tA_solution);
                 else
-                    disp('ERROR: Neither SCM_signal nor TCM_signal nor CSF_signal can be called.')
+                    disp(['ERROR: Neither SCM_signal nor TCM_signal ...' ...
+                        'nor CP_LV_model nor sum_bloodLV_CPLV can be called.'])
                 end
                 
                 plot(ax, PLD, signal, 'DisplayName', legend_text)

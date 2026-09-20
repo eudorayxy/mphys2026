@@ -1,15 +1,15 @@
 clear all
 tic
 
-onedrive = 'C:\Users\c01712ey\OneDrive - The University of Manchester\1 MPhys Project\';
+onedrive = 'C:\Users\eudor\OneDrive - The University of Manchester\1 MPhys Project\';
 
 addpath([onedrive 'CE-ASL\CE-ASL'])
 addpath([onedrive 'spm12'])
 addpath([onedrive 'fm_toolbox'])
 
-dataset = 'Data';
+dataset = 'Visit 1';
 % change this
-id_list = readtable([onedrive 'CE-ASL\' dataset '\Data_data.xlsx']).ID;
+id_list = readtable([onedrive 'CE-ASL\' dataset '\visit1_data.xlsx']).ID;
 % id_list(strcmp(id_list,'053_no_contrast')) = [];
 % select_row = find(strcmp(id_list, '056_no_contrast'));
 % id_list = id_list(select_row);
@@ -24,7 +24,7 @@ PLDs_eASL_PLD1000 = [1000, 1573, 2458]; %ms
 
 atlas_nii = 'DKTatlas.nii';
 atlas_dataset = 'Visit 1';
-atlas_nii = 'aparc.DKTatlas+aseg-in-rawavg_mgz2nii.nii';
+% atlas_nii = 'aparc.DKTatlas+aseg-in-rawavg_mgz2nii.nii';
 % lateral ventricle 4 & 43
 % choroid plexus 31 & 63
 % tissue_type = {'lateral_ventricle', 'choroid_plexus'};
@@ -36,14 +36,19 @@ csf = struct('name', 'CSF', 't1w_nii', 'c33D_T1w.nii'); % imerode csf & lateral 
 choroid_plexus = struct('name', 'choroid plexus', 'atlas_idx', [31 63]);
 lateral_ventricle = struct('name', 'lateral ventricles', ...
     'atlas_idx', [4 43]);
+inf_lateral_ventricle = struct('name', 'inferior lateral ventricles', ...
+    'atlas_idx', [5 44]);
 
 % csf.erode_num_vox = 1; % number of voxels
-lateral_ventricle.erode_num_vox = 5;
-tissue_type = {lateral_ventricle};
+% lateral_ventricle.erode_num_vox = 5;
+inf_lateral_ventricle.erode_num_vox = 1;
+tissue_type = {inf_lateral_ventricle};
 
 header = string(cellfun(@(x) x.name, tissue_type,"UniformOutput",false));
 
-out_dir = {'ASL', 'CE-ASL'};
+out_dir = {'ASL', ...
+    ...'CE-ASL'
+    };
 
 output_folder = [onedrive 'CE-ASL\Output\'];
 write_dir = fullfile(onedrive, 'CE-ASL/Output/erode_mask', dataset);
@@ -70,9 +75,9 @@ for tis=1:numel(tissue_type)
     eASL_median = [];
     eASL_std = [];
     
-    CeASL_mean = [];
-    CeASL_median = [];
-    CeASL_std = [];
+    % CeASL_mean = [];
+    % CeASL_median = [];
+    % CeASL_std = [];
 
     tissue_name = this_tissue_struct.name;
 
@@ -94,12 +99,12 @@ for tis=1:numel(tissue_type)
         S_e_mean = struct('Participant_ID', char(id));
         S_e_median = struct('Participant_ID', char(id));
         S_e_std = struct('Participant_ID', char(id));
-        S_c_mean = struct('Participant_ID', char(id));
-        S_c_median = struct('Participant_ID', char(id));
-        S_c_std = struct('Participant_ID', char(id));
+        % S_c_mean = struct('Participant_ID', char(id));
+        % S_c_median = struct('Participant_ID', char(id));
+        % S_c_std = struct('Participant_ID', char(id));
 
         pre_data_exist = true;
-        post_data_exist = true;
+        % post_data_exist = true;
 
         % structural_dir = dir(fullfile(rootdir, 'structural'));
         
@@ -120,10 +125,10 @@ for tis=1:numel(tissue_type)
 
         %% select roi here!
         if isfield(this_tissue_struct, 't1w_nii')
-            seg = double(load_nii(fullfile(rootdir, 'structural', this_tissue_struct.t1w_nii)).img);
+            seg = double(niftiread(fullfile(rootdir, 'structural', this_tissue_struct.t1w_nii)));
             seg_mask = seg > mask_threshold;  
         elseif isfield(this_tissue_struct, 'atlas_idx')
-            seg = double(load_nii(atlas_nii_path).img);
+            seg = double(niftiread(atlas_nii_path));
             seg_mask = zeros(size(seg)); 
             for atlas_idx=this_tissue_struct.atlas_idx
                 seg_mask(seg==atlas_idx) = 1;
@@ -188,7 +193,7 @@ for tis=1:numel(tissue_type)
             else
                 for j = 1:numel(files)
                     nii_file = fullfile(read_dir, files(j).name);
-                    image = double(load_nii(nii_file).img);
+                    image = double(niftiread(nii_file));
                     if contains(files(j).name, 'M0')
                         if contains(files(j).name, 'PLD700')
                             M0_image_PLD700 = image;
@@ -201,8 +206,7 @@ for tis=1:numel(tissue_type)
                 for j = 1:numel(files)
                     if ~contains(files(j).name, 'M0')
                         nii_file = fullfile(read_dir, files(j).name);
-                        nii = load_nii(nii_file);
-                        image = double(nii.img);
+                        image = double(niftiread(nii_file));
                         % Make field name readable and valid
                         name = erase(files(j).name, '.nii');
                         fprintf(logfile, 'Extracting data from %s ...\n', name);
@@ -277,10 +281,10 @@ for tis=1:numel(tissue_type)
                             S_e_median.(field_name) = corrected_median_val;
                             S_e_std.(field_name) = corrected_std_val;
                            
-                        else
-                            S_c_mean.(field_name) = corrected_mean_val;
-                            S_c_median.(field_name) = corrected_median_val;
-                            S_c_std.(field_name) = corrected_std_val;
+                        % else
+                        %     S_c_mean.(field_name) = corrected_mean_val;
+                        %     S_c_median.(field_name) = corrected_median_val;
+                        %     S_c_std.(field_name) = corrected_std_val;
                         end
                     end
                 end
@@ -301,19 +305,19 @@ for tis=1:numel(tissue_type)
             end
         end
 
-        if post_data_exist
-            if ~isempty(CeASL_median)
-                if numel(fieldnames(S_c_median)) == numel(fieldnames(CeASL_median))
-                    CeASL_mean = [CeASL_mean; S_c_mean];
-                    CeASL_median = [CeASL_median; S_c_median];
-                    CeASL_std = [CeASL_std; S_c_std];
-                end
-            else
-                CeASL_mean = [CeASL_mean; S_c_mean];
-                CeASL_median = [CeASL_median; S_c_median];
-                CeASL_std = [CeASL_std; S_c_std];
-            end
-        end
+        % if post_data_exist
+        %     if ~isempty(CeASL_median)
+        %         if numel(fieldnames(S_c_median)) == numel(fieldnames(CeASL_median))
+        %             CeASL_mean = [CeASL_mean; S_c_mean];
+        %             CeASL_median = [CeASL_median; S_c_median];
+        %             CeASL_std = [CeASL_std; S_c_std];
+        %         end
+        %     else
+        %         CeASL_mean = [CeASL_mean; S_c_mean];
+        %         CeASL_median = [CeASL_median; S_c_median];
+        %         CeASL_std = [CeASL_std; S_c_std];
+        %     end
+        % end
         
     end
     
@@ -321,9 +325,11 @@ for tis=1:numel(tissue_type)
         ['erode_size' erode_size_str '_deltaM.xlsx']);
 
     struct_holder = {eASL_mean, eASL_median, eASL_std, ...
-        CeASL_mean, CeASL_median, CeASL_std};
+     ...   CeASL_mean, CeASL_median, CeASL_std
+        };
     sheet_names = {'eASL_mean', 'eASL_median', 'eASL_std', ...
-               'CeASL_mean', 'CeASL_median', 'CeASL_std'};
+               ...'CeASL_mean', 'CeASL_median', 'CeASL_std'
+               };
 
     is_struct_array = cellfun(@isstruct, struct_holder);
     struct_holder = struct_holder(is_struct_array);

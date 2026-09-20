@@ -1,72 +1,67 @@
 clear all
 tic
 
-onedrive = 'C:\Users\c01712ey\OneDrive - The University of Manchester\1 MPhys Project\';
+onedrive = 'C:\Users\eudor\OneDrive - The University of Manchester\1 MPhys Project\';
 network_drive = '\\nasr.man.ac.uk\mhsrss$\snapped\replicated\sidd-mcr\mphys_2026\';
 
 addpath([onedrive 'CE-ASL\CE-ASL'])
 addpath([onedrive 'spm12'])
 addpath([onedrive 'fm_toolbox'])
 
-dataset = 'Visit 1';
+dataset = 'Data';
 % voxelsize = [1.719 1.719 4]; % check this is correct
 voxelsize = [1 1 1]; 
 mask_threshold = 0.9;
 PLDs_eASL_PLD700 = [700, 1273, 2158]; %ms
 PLDs_eASL_PLD1000 = [1000, 1573, 2458]; %ms
-PLDs = [890 1300 1700 2100 2500]; %ms
+% PLDs = [890 1300 1700 2100 2500]; %ms
 
 % change this
-id_list = readtable([onedrive 'CE-ASL\' dataset '\visit1_data.xlsx']).ID;
+id_list = readtable([onedrive 'CE-ASL\' dataset '\Data_data.xlsx']).ID;
 % id_list(strcmp(id_list,'053_no_contrast')) = [];
 % select_row = find(strcmp(id_list, '053_no_contrast'));
 % id_list = id_list(select_row, :);
 % id_list(2) = [];
 
-stroke_impact_dir = fullfile(network_drive, 'Stroke_Impact_6mControls');
-id_list = readtable(fullfile(stroke_impact_dir, "data_log.csv")).id;
+% stroke_impact_dir = fullfile(network_drive, 'Stroke_Impact_6mControls');
+% id_list = readtable(fullfile(stroke_impact_dir, "data_log.csv")).id;
 
-% atlas_nii = 'DKTatlas.nii';
-% atlas_dataset = 'Visit 1';
-% atlas_nii = 'aparc.DKTatlas+aseg-in-rawavg_mgz2nii.nii';
-
-% gm = struct('name', 'gm', 't1w_nii', 'c13D_T1w.nii');
-% wm = struct('name', 'wm', 't1w_nii', 'c23D_T1w.nii');
-% csf = struct('name', 'csf', 't1w_nii', 'c33D_T1w.nii'); % imerode csf & lateral ventricle?
-% choroid_plexus = struct('name', 'choroid plexus', 'atlas_idx', [31 63]);
-% lateral_ventricle = struct('name', 'lateral ventricles', ...
-%     'atlas_idx', [4 43]);
-
-% num_voxel_workbook = fullfile(onedrive, 'CE-ASL/Output/count_num_voxel', ...
-%     dataset, [dataset '_num_voxel.xlsx']);
-num_voxel_workbook = fullfile(stroke_impact_dir, 'Output', 'num_voxel.xlsx');
+num_voxel_workbook = fullfile(onedrive, 'CE-ASL/Output/count_num_voxel', ...
+    dataset, [dataset '_num_voxel.xlsx']);
+% num_voxel_workbook = fullfile(stroke_impact_dir, 'Output', 'num_voxel.xlsx');
 num_voxel_tbl = readtable(num_voxel_workbook, 'ReadRowNames', true, 'VariableNamingRule','preserve');
 
 %% tissue
 tissue_prob = '0_9';
-% gm = struct('name', 'gm', 'label', 'GM', 't1w_nii', 'c13D_T1w.nii', 'erode_size', {{['_' tissue_prob]}});
-% wm = struct('name', 'wm','label', 'WM', 't1w_nii', 'c23D_T1w.nii', 'erode_size', {{['_' tissue_prob]}});
-% csf = struct('name', 'csf', 'label', 'CSF');
-% lateral_ventricle = struct('name', 'lateral ventricles', 'label', 'LV', ...
-%     'erode_size', {{'_mask', 'erode_size1_corrected_mask', 'erode_size2_corrected_mask'...
-%     'erode_size3_corrected_mask', 'erode_size4_corrected_mask','erode_size5_corrected_mask'
-%     }});
-% choroid_plexus = struct('name', 'choroid plexus', 'label', 'CP', ...
-%     'erode_size', {{'_mask',...
-%     'erode_size1_corrected_mask'
-%     }});
-
-gm = struct('name', 'GM', 'label', 'GM', 't1w_nii', 'c13D_T1w.nii', 'erode_size', {{['_' tissue_prob]}});
-wm = struct('name', 'WM','label', 'WM', 't1w_nii', 'c23D_T1w.nii', 'erode_size', {{['_' tissue_prob]}});
+gm = struct('name', 'gm', 'label', 'GM', 't1w_nii', 'c13D_T1w.nii', 'erode_size', {{['_' tissue_prob]}});
+wm = struct('name', 'wm','label', 'WM', 't1w_nii', 'c23D_T1w.nii', 'erode_size', {{['_' tissue_prob]}});
+csf = struct('name', 'csf', 'label', 'CSF');
 lateral_ventricle = struct('name', 'lateral ventricles', 'label', 'LV', ...
-    'erode_size', {{'_mask', '_erode1mm', '_erode2mm',...
-    '_erode3mm', '_erode4mm', '_erode5mm', ...
+    'erode_size', {{'_mask', 'erode_size1_corrected_mask', 'erode_size2_corrected_mask'...
+    'erode_size3_corrected_mask', 'erode_size4_corrected_mask','erode_size5_corrected_mask'
     }});
 choroid_plexus = struct('name', 'choroid plexus', 'label', 'CP', ...
-    'erode_size', {{'_mask', '_erode1mm',
+    'erode_size', {{'_mask',...
+    'erode_size1_corrected_mask'
     }});
+inf_lateral_ventricle = struct('name', 'inferior lateral ventricles', 'label', 'ILV', ...
+    'erode_size', {{'_mask',...
+    'erode_size1_corrected_mask'
+    }});
+
+% gm = struct('name', 'GM', 'label', 'GM', 't1w_nii', 'c13D_T1w.nii', 'erode_size', {{['_' tissue_prob]}});
+% wm = struct('name', 'WM','label', 'WM', 't1w_nii', 'c23D_T1w.nii', 'erode_size', {{['_' tissue_prob]}});
+% lateral_ventricle = struct('name', 'lateral ventricles', 'label', 'LV', ...
+%     'erode_size', {{'_mask', '_erode1mm', '_erode2mm',...
+%     '_erode3mm', '_erode4mm', '_erode5mm', ...
+%     }});
+% choroid_plexus = struct('name', 'choroid plexus', 'label', 'CP', ...
+%     'erode_size', {{'_mask', '_erode1mm',
+%     }});
 tissue_type = {...gm, wm, 
-    lateral_ventricle, choroid_plexus};
+    ...lateral_ventricle, choroid_plexus
+    inf_lateral_ventricle
+    };
 
 % tissue = wm;
 % 
@@ -80,15 +75,15 @@ tissue_type = {...gm, wm,
 %% Loop through tissue type
 for tis=1:numel(tissue_type)
     tissue = tissue_type{tis};
-    % mask_dir = fullfile(onedrive, 'CE-ASL/Output/erode_mask', dataset, tissue.name);
-    mask_dir = fullfile(stroke_impact_dir, 'Output/erode_mask', tissue.name);
+    mask_dir = fullfile(onedrive, 'CE-ASL/Output/erode_mask', dataset, tissue.name);
+    % mask_dir = fullfile(stroke_impact_dir, 'Output/erode_mask', tissue.name);
 
     erode_size_arr = tissue_type{tis}.erode_size;
     for ei=1:numel(erode_size_arr)
         out_file_str = [tissue_type{tis}.name erode_size_arr{ei}];
 
-        % write_dir = fullfile(onedrive, 'CE-ASL/Output/extract_summed_signal/newnew', dataset);
-        write_dir = fullfile(stroke_impact_dir, 'Output/extract_summed_signal/newnew');
+        write_dir = fullfile(onedrive, 'CE-ASL/Output/extract_summed_signal/newnew', dataset);
+        % write_dir = fullfile(stroke_impact_dir, 'Output/extract_summed_signal/newnew');
         if ~isfolder(write_dir)
             mkdir(write_dir);
         end
@@ -127,8 +122,8 @@ for tis=1:numel(tissue_type)
             id = char(id_list(idx))
             % fprintf(logfile, '\nID: %s', id);
             
-            % rootdir = fullfile(onedrive, 'CE-ASL', dataset, id);
-            rootdir = fullfile(stroke_impact_dir, id);
+            rootdir = fullfile(onedrive, 'CE-ASL', dataset, id);
+            % rootdir = fullfile(stroke_impact_dir, id);
 
             num_voxel = num_voxel_tbl{id, tissue.name};
             
@@ -213,26 +208,26 @@ for tis=1:numel(tissue_type)
                             name = erase(files(j).name, '.nii');
                             % fprintf(logfile, 'Extracting data from %s ...\n', name);
                             % Get the right M0 image for the series
-                            % if contains(files(j).name, 'PLD700')
-                            %     PLDs = PLDs_eASL_PLD700;
-                            % elseif contains(files(j).name, 'PLD1000')
-                            %     PLDs = PLDs_eASL_PLD1000;
-                            % end
+                            if contains(files(j).name, 'PLD700')
+                                PLDs = PLDs_eASL_PLD700;
+                            elseif contains(files(j).name, 'PLD1000')
+                                PLDs = PLDs_eASL_PLD1000;
+                            end
                             
                             parsed = split(name, '_');
-                            PLD_str = replace(parsed{end-1}, 'PLD', '');
-
-                            if ismember(str2double(PLD_str), PLDs)
-                                field_name = ['PLD' PLD_str];
-                            else
-                                error([name '.nii: ' PLD_str ' not in PLDs'])
-                            end
-                        
-                            % if ismember(str2double(parsed{end}), PLDs)
-                            %     field_name = ['PLD' parsed{end}];
+                            % PLD_str = replace(parsed{end-1}, 'PLD', '');
+                            % 
+                            % if ismember(str2double(PLD_str), PLDs)
+                            %     field_name = ['PLD' PLD_str];
                             % else
-                            %     error([name '.nii: ' parsed{end} ' not in PLDs'])
+                            %     error([name '.nii: ' PLD_str ' not in PLDs'])
                             % end
+                        
+                            if ismember(str2double(parsed{end}), PLDs)
+                                field_name = ['PLD' parsed{end}];
+                            else
+                                error([name '.nii: ' parsed{end} ' not in PLDs'])
+                            end
                             % field_name = name;
                         % 
                         % else
@@ -242,7 +237,7 @@ for tis=1:numel(tissue_type)
                             % fprintf(logfile, 'file name:%s, PLD: %s s\n', name, parsed{end});
                            
                             if mask_exist
-                                % image = image  ./ 32; % scaling factor for GE scanner
+                                image = image  ./ 32; % scaling factor for GE scanner
                                 image = image(seg_mask==1);
                                 image(isnan(image))=[]; % remove nan
     
