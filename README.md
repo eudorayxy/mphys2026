@@ -35,7 +35,16 @@ plot_model_weight_2.m: Plot model weights.
 plot_boxplot_averaged_curves.m: Plot boxplots for fit parameters given by different models. Perform group analysis using Mann-Whitney tests. Plot group-averaged ASL signals.
 
 ## Output – Excel Spreadsheets
-calc_akaike_weights_centralT1: Fit parameters and model weights.  
+calc_akaike_weights_centralT1: Fit parameters and model weights.
+- gm_0_9: Grey matter (GM) mask produced from the tissue probability map using a threshold of 0.9
+- wm_0_9: White matter (WM) mask produced from the tissue probability map using a threshold of 0.9
+- choroid_plexus_mask: Choroid plexus (CP) segmented using FreeSurfer
+- choroid_plexuserode_size1_corrected_mask: CP mask eroded using MATLAB strel of 1mm radius (pixel)
+- lateral ventricleserode_size3_corrected_mask: Lateral ventricles (LV) segmented using FreeSurfer and eroded using MATLAB strel of 3mm radius (pixel)
+- inferior lateral ventricles_mask: Inferior lateral ventricles (ILV) segmented using FreeSurfer
+- inferior lateral ventricleserode_size1_corrected_mask: ILV mask eroded using MATLAB strel of 1mm radius (pixel)
+Note: Fit parameters and model weights can be found in xxx_model_results.xlsx and the fitted ASL signal in xxx_delta_M.xlsx.
+
 count_num_voxel: Number of voxels given by uneroded masks.  
 extract_roi_T1: ROI T1 values.  
 extract_summed_signal/newnew: ASL signal.
