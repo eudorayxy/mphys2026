@@ -25,7 +25,8 @@
 **fit_CPLV_model.m**: Fit Blood-CP-LV Model to data.
 
 ## Scripts for Data Fitting and Model Selection
-**fit_ASL_summed_signal_centralT1.m**: Fit models to data.  
+**fit_ASL_summed_signal_centralT1.m**: Fit models to individual data. 
+**fit_averaged_curves.m**: Fit models to averaged data.
 **cal_akaike_weights_centralT1.m**: Produce excel sheets containing fit parameters and normalised Akaike model weights (with small sample correction).  
 **STCM_csf_model_identifiability.m**: Plot multi-start fitting solutions using the STCM, SBCM, TCM, STCM+outflow, blood-CP-LV models to assess parameter identifiability.
 
