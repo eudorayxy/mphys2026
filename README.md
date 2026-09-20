@@ -44,9 +44,10 @@
 - *lateral ventricleserode_size3_corrected_mask*: Lateral ventricles (LV) segmented using FreeSurfer and eroded using MATLAB strel of 3mm radius (pixel)
 - *inferior lateral ventricles_mask*: Inferior lateral ventricles (ILV) segmented using FreeSurfer
 - *inferior lateral ventricleserode_size1_corrected_mask*: ILV mask eroded using MATLAB strel of 1mm radius (pixel)  
-**Note**: Fit parameters and model weights can be found in xxx_model_results.xlsx and the fitted ASL signal in xxx_delta_M.xlsx.
+**Note**: Fit parameters and model weights can be found in xxx_model_results.xlsx and the fitted ASL signal in xxx_delta_M.xlsx.  
 
 **count_num_voxel**: Number of voxels given by uneroded masks.  
 **extract_roi_T1**: ROI T1 values.  
-**extract_summed_signal/newnew**: ASL signal.
+**extract_summed_signal/newnew**: ASL signal.  
+**xxx_roi_outlier.xlsx**: Outlier parameters (values > 1.5*IQR)  
 **Note**: *STCM_LV* represents the STCM+outflow model, *CP_LV* represents the blood-CP-LV model
