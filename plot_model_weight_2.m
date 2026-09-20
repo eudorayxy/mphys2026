@@ -12,7 +12,8 @@ set(groot, 'DefaultScatterSizeData', 80)
 
 tissue_prob = '0_9';
 read_sheet = 'median_times_vol_normalised';
-read_sheet_arr= {'median_normalised', 'median_normalised', 'median_normalised', 'mean_times_vol_normalised'};
+read_sheet_arr= {'median_normalised', 'median_normalised', 'median_normalised',...
+    'mean_times_vol_normalised',  'mean_times_vol_normalised'};
 % read_sheet = 'mean_times_vol_normalised';
 
 % models
@@ -33,6 +34,9 @@ lateral_ventricle = struct('name', 'lateral ventricles', 'label', 'LV', ...
 choroid_plexus = struct('name', 'choroid plexus', 'label', 'CP', ...
     'erode_size', 'erode_size1_corrected_mask', ...
     'model', {{SBCM, STCM, TCM}});
+inf_lateral_ventricle = struct('name', 'inferior lateral ventricles', 'label', 'ILV', ...
+    'erode_size', 'erode_size1_corrected_mask', ...
+    'model', {{STCM, STCM_csf, CPLV}});
 
 calc_akaike_weights_dir = fullfile(onedrive, ...
     'CE-ASL/Output/calc_akaike_weights_centralT1');
@@ -55,11 +59,12 @@ calc_akaike_weights_dir = fullfile(onedrive, ...
 %%
 tissue_type = {gm, wm,...
     choroid_plexus,...
-    lateral_ventricle
+    lateral_ventricle, ...
+    inf_lateral_ventricle
     };
 
 fig = figure;
-tiled = tiledlayout(fig, 1, numel(tissue_type), 'TileSpacing', 'none');
+tiled = tiledlayout(fig, 1, numel(tissue_type), 'TileSpacing', 'none', 'Padding','compact');
 % title(tiled, ['Model Weight - ' replace(read_sheet, '_', '\_')])
 for tis=1:numel(tissue_type)
     tissue_type_struct = tissue_type{tis};
@@ -97,3 +102,6 @@ for tis=1:numel(tissue_type)
     end
 
 end
+
+exportgraphics(fig, fullfile(onedrive, ...
+    'CE-ASL/Output/plot_boxplot_averaged_curves/model_weight.png'), Resolution=300)

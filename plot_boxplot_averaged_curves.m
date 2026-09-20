@@ -11,12 +11,9 @@ set(groot, 'DefaultLineLineWidth', 1.5)
 set(groot, 'DefaultScatterSizeData', 80)
 
 tissue_prob = '0_9';
-read_sheet = 'median_times_vol_normalised';
-read_sheet = 'median_normalised';
-read_sheet = 'mean_times_vol_normalised';
 fitNames = {'f', 'tA', 'k'
     };
-ylabels = {'F (rel. units)', 't_A (s)' , 'k_{out} (s^{-1})'
+ylabels = {'F (mL/s)', 't_A (s)' , 'k_{out} (s^{-1})'
     };
 
 % models
@@ -44,6 +41,9 @@ lateral_ventricle = struct('name', 'lateral ventricles', 'label', 'LV', ...
 choroid_plexus = struct('name', 'choroid plexus', 'label', 'CP', ...
     'erode_size', 'erode_size1_corrected_mask', ...
     'model', {{SBCM, STCM, TCM}});
+inf_lateral_ventricle = struct('name', 'inferior lateral ventricles', 'label', 'ILV', ...
+    'erode_size', 'erode_size1_corrected_mask', ...
+    'model', {{STCM, STCM_csf, CPLV}});
 
 calc_akaike_weights_dir = fullfile(onedrive, ...
     'CE-ASL/Output/calc_akaike_weights_centralT1');
@@ -129,10 +129,14 @@ gm.selected_model = SBCM;
 wm.selected_model = SBCM;
 choroid_plexus.selected_model = SBCM;
 lateral_ventricle.selected_model = STCM_csf;
+inf_lateral_ventricle.selected_model = STCM;
 
-tissue_type = {...gm, wm, ...
-    ...choroid_plexus, ...
-    lateral_ventricle
+read_sheet = 'median_times_vol_normalised';
+read_sheet = 'median_normalised';
+% read_sheet = 'mean_times_vol_normalised';
+tissue_type = {gm, wm, ...
+    choroid_plexus, ...
+   ... lateral_ventricle, inf_lateral_ventricle
     };
 %% Group ids
 control_ids = cell(numel(clinical_measures), 1);
@@ -350,14 +354,14 @@ end % End of loop over clinical measures
 %% Plot Boxplots (ungrouped)
 write_png = fullfile(write_dir, sprintf('%s_boxplot_ungrouped.png', read_sheet));
 fig = figure;
-n_col =  numel(fitNames);
-n_row = numel(tissue_type);
-tiled = tiledlayout(fig, n_row, n_col);
+% n_col =  numel(fitNames);
+% n_row = numel(tissue_type);
+% tiled = tiledlayout(fig, n_row, n_col);
 
-% n_row = numel(fitNames);
-% n_col = numel(tissue_type);
-% tiled = tiledlayout(fig, n_row, n_col, 'Padding', 'compact', 'TileSpacing', 'tight' ...
-%     );
+n_row = numel(fitNames);
+n_col = numel(tissue_type);
+tiled = tiledlayout(fig, n_row, n_col, 'Padding', 'compact', 'TileSpacing', 'tight' ...
+    );
 % title(tiled, replace(read_sheet, '_', '\_'))
        
 for fi=1:numel(fitNames)
@@ -431,9 +435,9 @@ for fi=1:numel(fitNames)
         %     yticklabels(ax, {})
         % end
 
-        % if fi == 1
-        %     title(ax, tissue_type{tis}.label)
-        % end
+        if fi == 1
+            title(ax, tissue_type{tis}.label)
+        end
         ax_holder{tis} = ax;
         hold(ax, 'off')
     end % End of loop over tissue types
@@ -460,6 +464,7 @@ end % End of loop over f, tA, k
 exportgraphics(fig, write_png, 'Resolution', 300)
 
 %% Plot Boxplots (selected model)
+write_outlier_workbook = fullfile(write_dir, [read_sheet ' outlier.xlsx']); 
 for meas=1:numel(clinical_measures)
     write_png = fullfile(write_dir, sprintf('%s %s_boxplot_selected.png', read_sheet, ...
         clinical_measures{meas}.label));
@@ -467,11 +472,11 @@ for meas=1:numel(clinical_measures)
     % tiled = tiledlayout(fig, 7, numel(tissue_type), ...
     %     'Padding', 'compact', 'TileSpacing', 'tight');
 
-    n_col =  numel(fitNames);
-    n_row = numel(tissue_type);
+    % n_col =  numel(fitNames);
+    % n_row = numel(tissue_type);
     
-    % n_row = numel(fitNames);
-    % n_col = numel(tissue_type);
+    n_row = numel(fitNames);
+    n_col = numel(tissue_type);
     tiled = tiledlayout(fig, n_row, n_col, 'Padding', 'compact', 'TileSpacing', 'tight' ...
         );
     % title(tiled, replace(read_sheet, '_', '\_'))
@@ -499,19 +504,58 @@ for meas=1:numel(clinical_measures)
                 tissue_type_struct.selected_model.name, ...
                 'ReadRowNames', true);
 
-            common_ids = intersect(control_ids{meas}, tbl.Participant_ID);
-            ctrl = tbl{common_ids, fitNames{fi}};
-            common_ids = intersect(risk_ids{meas}, tbl.Participant_ID);
-            risk = tbl{common_ids, fitNames{fi}};
+            control_common_ids = intersect(control_ids{meas}, tbl.Participant_ID);
+            ctrl = tbl{control_common_ids, fitNames{fi}};
+            
+            risk_common_ids = intersect(risk_ids{meas}, tbl.Participant_ID);
+            risk = tbl{risk_common_ids, fitNames{fi}};
 
             if multiply_6000
                 ctrl = ctrl.*6000;
                 risk = risk.*6000;
                 ylabels{fi} = 'f (mL/min/100mL)';
             end
-
+            
             num_ctrl = length(ctrl);
             num_risk = length(risk);
+            
+            % % Find outliers: >3 SD from the group mean
+            % mean_ctrl = mean(ctrl, 'omitnan')
+            % std_ctrl = std(ctrl, 'omitnan')
+            % iqr_ctrl = iqr(ctrl);
+            % mean_risk = mean(risk, 'omitnan')
+            % std_risk = std(risk, 'omitnan')
+            % outlier_ctrl_mask = abs(ctrl - mean_ctrl) > 3*std_ctrl;
+            % outlier_risk_mask = abs(risk - mean_risk) > 3*std_risk;
+           
+            Q1_ctrl = quantile(ctrl, 0.25);
+            Q3_ctrl = quantile(ctrl, 0.75);
+            IQR_val_ctrl = Q3_ctrl - Q1_ctrl;
+            outlier_ctrl_mask = ctrl < Q1_ctrl - 1.5*IQR_val_ctrl | ...
+                           ctrl > Q3_ctrl + 1.5*IQR_val_ctrl;
+            Q1_risk = quantile(risk, 0.25);
+            Q3_risk = quantile(risk, 0.75);
+            IQR_val_risk = Q3_risk - Q1_risk;
+            outlier_risk_mask = risk < Q1_risk - 1.5*IQR_val_risk | ...
+                           risk > Q3_risk + 1.5*IQR_val_risk;
+            
+            % Return the corresponding rows as a table
+            outlier_ctrl = tbl(control_common_ids(outlier_ctrl_mask), fitNames{fi})
+            outlier_risk = tbl(risk_common_ids(outlier_risk_mask), fitNames{fi})
+            if ~isempty(outlier_ctrl)
+                writetable(outlier_ctrl, write_outlier_workbook, ...
+                    'Sheet', sprintf('%s_%s_ctrl_%s', tissue_type_struct.selected_model.name, ...
+                    clinical_measures{meas}.label, fitNames{fi}), 'WriteRowNames', true)
+            end
+            if ~isempty(outlier_risk)
+                writetable(outlier_risk, write_outlier_workbook, ...
+                    'Sheet', sprintf('%s_%s_risk_%s', tissue_type_struct.selected_model.name, ...
+                    clinical_measures{meas}.label, fitNames{fi}), 'WriteRowNames', true)
+            end
+
+            % filtered parameters
+            filtered_ctrl = ctrl(~outlier_ctrl_mask);
+            filtered_risk = risk(~outlier_risk_mask);
 
             if ~all(isnan(ctrl), 'all') && ~all(isnan(risk), 'all')
                 ymax_1 = max(ctrl, [], 'all', 'omitnan');
@@ -538,9 +582,21 @@ for meas=1:numel(clinical_measures)
                     % stars_arr{si} = sprintf('*\n%.3f', p_val);
                     stars = '*';
                 else
-                    stars = '';
+                    stars = 'ns';
+                end  
+
+                p_val_filtered = ranksum(filtered_ctrl, filtered_risk,"Tail","both", "method","exact");
+                if p_val_filtered < 0.001
+                    stars_filtered = '***';
+                elseif p_val_filtered < 0.01
+                    stars_filtered = '**';
+                elseif p_val_filtered < 0.05
+                    stars_filtered = '*';
+                else
+                    stars_filtered = 'ns';
                 end  
             end
+            
             all_data = [all_data; ctrl; risk];
             xGroup = [xGroup;
                 ones(num_ctrl, 1);
@@ -564,48 +620,49 @@ for meas=1:numel(clinical_measures)
             xticks(ax, 1:2)
             xticklabels(ax, names)
 
-            if tis == 1
+            % if tis == 1
                 ylabel(ax, ylabels{fi})
-            elseif tis == numel(tissue_type)
-                yyaxis(ax, "left")
-                yticklabels(ax, {})
-                yyaxis(ax, "right")
-                % ax.YAxisLocation = 'right';
-            else
-                yticklabels(ax, {})
-            end
+            % elseif tis == numel(tissue_type)
+            %     yyaxis(ax, "left")
+            %     yticklabels(ax, {})
+            %     yyaxis(ax, "right")
+            %     % ax.YAxisLocation = 'right';
+            % else
+            %     yticklabels(ax, {})
+            % end
             ax_holder{tis} = ax;
             text(ax, 1.5, ...
-                this_ax_ymax_arr, stars, "HorizontalAlignment","center")
+                this_ax_ymax_arr, [stars '/' stars_filtered], "HorizontalAlignment","center")
             hold(ax, 'off')
             if fi == 1
-                % title(ax, tissue_type{tis}.label)
+                title(ax, tissue_type{tis}.label)
                 % leg = legend(ax, 'show', 'Location', 'northeast', 'NumColumns', 1);
                 % title(leg, clinical_measures{meas}.label)
             end
+            ylim(ax, [y_min this_ax_ymax_arr*1.1])
         end % End of loop over tissue types
 
-        y_max = y_max * 1.2;
+        y_max = y_max * 1.3;
         for tis=1:numel(tissue_type)
             if isempty(ax_holder{tis})
                 continue
             end
 
-            % if tis ~= numel(tissue_type)
-               
+            if tis ~= numel(tissue_type)
+
                 ylim(ax_holder{tis}, [y_min y_max])
-                
-            % else
-            % 
-            %     yyaxis left
-            %     ylim(ax_holder{tis}, [y_min y_max])
-            %     ax.YColor = 'k';
-            % 
-            %     yyaxis right
-            %     ylim(ax_holder{tis}, [y_min y_max])
-            %     ax.YColor = 'k';
-            % 
-            % end
+
+            else
+
+                yyaxis left
+                ylim(ax_holder{tis}, [y_min y_max])
+                ax.YColor = 'k';
+
+                yyaxis right
+                ylim(ax_holder{tis}, [y_min y_max])
+                ax.YColor = 'k';
+
+            end
 
         end % End of loop over tissue types (format ylim etc)
     end % End of loop over f, tA, k
