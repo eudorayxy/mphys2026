@@ -1,3 +1,5 @@
+**ParticipantDetails.xlsx**: Cohort details  
+
 ## Functions for Image Processing
 **Eu_register_x.m**: Register images using spm12.  
 **Eu_segement.m**: Segment images using spm12.
